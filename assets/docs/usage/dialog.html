@@ -1,0 +1,143 @@
+<p>The <code>HcDialog</code> service can be used to open modal dialogs with Material Design styling and
+animations.</p>
+<!-- example(dialog-overview) -->
+<p>A dialog is opened by calling the <code>open</code> method with a component to be loaded and an optional
+config object. The <code>open</code> method will return an instance of <code>HcDialogRef</code>:</p>
+<pre><code class="language-ts">let dialogRef = dialog.open(UserProfileComponent, {
+    height: '400px',
+    width: '600px'
+});
+</code></pre>
+<p>The <code>HcDialogRef</code> provides a handle on the opened dialog. It can be used to close the dialog and to
+receive notification when the dialog has been closed.</p>
+<pre><code class="language-ts">dialogRef.afterClosed().subscribe(result =&gt; {
+    console.log(`Dialog result: ${result}`); // Pizza!
+});
+
+dialogRef.close('Pizza!');
+</code></pre>
+<p>Components created via <code>HcDialog</code> can <em>inject</em> <code>HcDialogRef</code> and use it to close the dialog
+in which they are contained. When closing, an optional result value can be provided. This result
+value is forwarded as the result of the <code>afterClosed</code> promise.</p>
+<pre><code class="language-ts">@Component({
+    /* ... */
+})
+export class YourDialog {
+    constructor(public dialogRef: HcDialogRef&lt;YourDialog&gt;) {}
+
+    closeDialog() {
+        this.dialogRef.close('Pizza!');
+    }
+}
+</code></pre>
+<h3>Specifying global configuration defaults</h3>
+<p>Default dialog options can be specified by providing an instance of <code>HcDialogConfig</code> for
+HC_DIALOG_DEFAULT_OPTIONS in your application's root module.</p>
+<pre><code class="language-ts">@NgModule({
+  providers: [
+    {provide: HC_DIALOG_DEFAULT_OPTIONS, useValue: {hasBackdrop: false}}
+  ]
+})
+</code></pre>
+<h3>Sharing data with the Dialog component.</h3>
+<p>If you want to share data with your dialog, you can use the <code>data</code> option to pass information to the dialog component.</p>
+<pre><code class="language-ts">let dialogRef = dialog.open(YourDialog, {
+    data: {name: 'austin'}
+});
+</code></pre>
+<p>To access the data in your dialog component, you have to use the HC_DIALOG_DATA injection token:</p>
+<pre><code class="language-ts">import {Component, Inject} from '@angular/core';
+import {HC_DIALOG_DATA} from '@angular/material';
+
+@Component({
+    selector: 'your-dialog',
+    template: 'passed in {{ data.name }}'
+})
+export class YourDialog {
+    constructor(@Inject(HC_DIALOG_DATA) public data: any) {}
+}
+</code></pre>
+<!-- example(dialog-data) -->
+<h3>Dialog content</h3>
+<p>Several directives are available to make it easier to structure your dialog content:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hc-dialog-title</code></td>
+<td>[Attr] Dialog title, applied to a heading element (e.g., <code>&lt;h1&gt;</code>, <code>&lt;h2&gt;</code>)</td>
+</tr>
+<tr>
+<td><code>&lt;hc-dialog-content&gt;</code></td>
+<td>Primary scrollable content of the dialog</td>
+</tr>
+<tr>
+<td><code>&lt;hc-dialog-actions&gt;</code></td>
+<td>Container for action buttons at the bottom of the dialog</td>
+</tr>
+<tr>
+<td><code>hc-dialog-close</code></td>
+<td>[Attr] Added to a <code>&lt;button&gt;</code>, makes the button close the dialog with an optional result from the bound value.</td>
+</tr>
+</tbody>
+</table>
+<p>For example:</p>
+<pre><code class="language-html">&lt;h2 hc-dialog-title&gt;Delete all&lt;/h2&gt;
+&lt;hc-dialog-content&gt;Are you sure?&lt;/hc-dialog-content&gt;
+&lt;hc-dialog-actions&gt;
+    &lt;button hc-button hc-dialog-close&gt;No&lt;/button&gt;
+    &lt;!-- The hc-dialog-close directive optionally accepts a value as a result for the dialog. --&gt;
+    &lt;button hc-button [hc-dialog-close]=&quot;true&quot;&gt;Yes&lt;/button&gt;
+&lt;/hc-dialog-actions&gt;
+</code></pre>
+<p>Once a dialog opens, the dialog will automatically focus the first tabbable element.</p>
+<p>You can control which elements are tab stops with the <code>tabindex</code> attribute</p>
+<pre><code class="language-html">&lt;button hc-button tabindex=&quot;-1&quot;&gt;Not Tabbable&lt;/button&gt;
+</code></pre>
+<!-- example(dialog-content) -->
+<h3>Configuring dialog content via <code>entryComponents</code></h3>
+<p>Because <code>HcDialog</code> instantiates components at run-time, the Angular compiler needs extra
+information to create the necessary <code>ComponentFactory</code> for your dialog content component.</p>
+<p>For any component loaded into a dialog, you must include your component class in the list of
+<code>entryComponents</code> in your NgModule definition so that the Angular compiler knows to create
+the <code>ComponentFactory</code> for it.</p>
+<pre><code class="language-ts">@NgModule({
+    imports: [
+        // ...
+        HcDialogModule
+    ],
+
+    declarations: [AppComponent, ExampleDialogComponent],
+
+    entryComponents: [ExampleDialogComponent],
+
+    providers: [],
+    bootstrap: [AppComponent]
+})
+export class AppModule {}
+</code></pre>
+<h3>Accessibility</h3>
+<p>By default, each dialog has <code>role=&quot;dialog&quot;</code> on the root element. The role can be changed to
+<code>alertdialog</code> via the <code>HcDialogConfig</code> when opening.</p>
+<p>The <code>aria-label</code>, <code>aria-labelledby</code>, and <code>aria-describedby</code> attributes can all be set to the
+dialog element via the <code>HcDialogConfig</code> as well. Each dialog should typically have a label
+set via <code>aria-label</code> or <code>aria-labelledby</code>.</p>
+<p>When a dialog is opened, it will move focus to the first focusable element that it can find. In
+order to prevent users from tabbing into elements in the background, the Material dialog uses
+a <a href="https://material.angular.io/cdk/a11y/overview#focustrap">focus trap</a> to contain focus
+within itself. Once a dialog is closed, it will return focus to the element that was focused
+before the dialog was opened.</p>
+<h4>Focus management</h4>
+<p>By default, the first tabbable element within the dialog will receive focus upon open. This can
+be configured by setting the <code>cdkFocusInitial</code> attribute on another focusable element.</p>
+<p>Tabbing through the elements of the dialog will keep focus inside of the dialog element,
+wrapping back to the first tabbable element when reaching the end of the tab sequence.</p>
+<h4>Keyboard interaction</h4>
+<p>By default pressing the escape key will close the dialog. While this behavior can
+be turned off via the <code>disableClose</code> option, users should generally avoid doing so
+as it breaks the expected interaction pattern for screen-reader users.</p>
