@@ -1,10 +1,8 @@
 import {NgModule} from '@angular/core';
-
-import {EllipsisPipe} from './ellipsis.pipe';
-import { NullOrEmptyPipe } from './null-or-empty/null-or-empty.pipe';
+import {EllipsisPipeModule} from './ellipsis/ellipsis-pipe.module';
 
 @NgModule({
-    declarations: [EllipsisPipe, NullOrEmptyPipe],
-    exports: [EllipsisPipe, NullOrEmptyPipe]
+    imports: [EllipsisPipeModule],
+    exports: [EllipsisPipeModule]
 })
 export class PipesModule {}
